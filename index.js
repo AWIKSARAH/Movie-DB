@@ -123,6 +123,24 @@ app.get("/movies/read/id/:id", (req, res) => {
 }
 );
 
+// Create a new movie
+app.get("/movies/add", (req, res) => {
+
+    const newMovie = {
+      title: req.query.title,
+      year: req.query.year,
+      rating: req.query.rating || 4,
+    };
+  
+    if(!newMovie.title || !newMovie.year || (isNaN(newMovie.year)) || (!/^\d{4}$/.test(newMovie.year)) ){
+    res.status(403).json({status: 403, message:"you cannot create a movie without providing a title and a year"})
+    }
+    else{
+    movies.push(newMovie);
+    res.status(200).json({status: 200, message:"add successfully"})
+    }
+  });
+  
 //Server Port
 app.listen(3001, () => {
   console.log("Server listening on port 3000");
