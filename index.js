@@ -104,44 +104,62 @@ app.get("/movies/read", (req, res) => {
 
 //Read ONE
 app.get("/movies/read/id/:id", (req, res) => {
-    const idnum = parseInt(req.params.id);//undefined
-  // const  = req.query.search;
-//   const search = movies.find((movie) => movie[idnum-1] === id);
-//   console.log(typeof(idnum),idnum);
-//   console.log(movies[req.params.id-1]);
-  if (idnum <= movies.length)  {
+  const idnum = parseInt(req.params.id); //undefined
+
+  if (idnum <= movies.length) {
     res.status(200).json({ status: 200, message: "OK", data: movies[idnum] });
   } else {
-    res
-      .status(404)
-      .json({
-        status: 404,
-        error: true,
-        message: `the movie ${idnum} does not exist`,
-      });
+    res.status(404).json({
+      status: 404,
+      error: true,
+      message: `the movie ${idnum} does not exist`,
+    });
   }
-}
-);
+});
 
 // Create a new movie
 app.get("/movies/add", (req, res) => {
+  const newMovie = {
+    title: req.query.title,
+    year: req.query.year,
+    rating: req.query.rating || 4,
+  };
 
-    const newMovie = {
-      title: req.query.title,
-      year: req.query.year,
-      rating: req.query.rating || 4,
-    };
-  
-    if(!newMovie.title || !newMovie.year || (isNaN(newMovie.year)) || (!/^\d{4}$/.test(newMovie.year)) ){
-    res.status(403).json({status: 403, message:"you cannot create a movie without providing a title and a year"})
-    }
-    else{
+  if (
+    !newMovie.title ||
+    !newMovie.year ||
+    isNaN(newMovie.year) ||
+    !/^\d{4}$/.test(newMovie.year)
+  ) {
+    res
+      .status(403)
+      .json({
+        status: 403,
+        message:
+          "you cannot create a movie without providing a title and a year",
+      });
+  } else {
     movies.push(newMovie);
-    res.status(200).json({status: 200, message:"add successfully"})
-    }
+    res.status(200).json({ status: 200, message: "add successfully" });
+  }
+});
+
+//Delete a movie
+app.get("/movies/delete/:id", (req, res) => {
+    const id = req.params.id;//undefined
+//   const deleteMovie = movies.find(movie[id])
+console.log(id)
+    if (id<= movies.length) {
+      movies.splice(movies[id], 1);
+      res.status(200).json({status: 200, message: "delete successfully"})
+  }
+  else{
+    res.status(404).json({status:404, error:true, message:'the movie <ID> does not exist'})
+  }
   });
+
   
 //Server Port
-app.listen(3001, () => {
+app.listen(5000, () => {
   console.log("Server listening on port 3000");
 });
