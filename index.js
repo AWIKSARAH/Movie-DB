@@ -131,13 +131,10 @@ app.get("/movies/add", (req, res) => {
     isNaN(newMovie.year) ||
     !/^\d{4}$/.test(newMovie.year)
   ) {
-    res
-      .status(403)
-      .json({
-        status: 403,
-        message:
-          "you cannot create a movie without providing a title and a year",
-      });
+    res.status(403).json({
+      status: 403,
+      message: "you cannot create a movie without providing a title and a year",
+    });
   } else {
     movies.push(newMovie);
     res.status(200).json({ status: 200, message: "add successfully" });
@@ -146,19 +143,45 @@ app.get("/movies/add", (req, res) => {
 
 //Delete a movie
 app.get("/movies/delete/:id", (req, res) => {
-    const id = req.params.id;//undefined
-//   const deleteMovie = movies.find(movie[id])
-console.log(id)
-    if (id<= movies.length) {
-      movies.splice(movies[id], 1);
-      res.status(200).json({status: 200, message: "delete successfully"})
+  const id = req.params.id; //undefined
+  //   const deleteMovie = movies.find(movie[id])
+  console.log(id);
+  if (id <= movies.length && id > 0) {
+    movies.splice(movies[id], 1);
+    res.status(200).json({ status: 200, message: "delete successfully" });
+  } else {
+    res.status(404).json({
+      status: 404,
+      error: true,
+      message: "the movie <ID> does not exist",
+    });
   }
-  else{
-    res.status(404).json({status:404, error:true, message:'the movie <ID> does not exist'})
-  }
-  });
+});
 
-  
+//Update the movie
+app.get("/movies/update/:id", (req, res) => {
+  const id = parseInt(req.params.id); //undefined
+  const titleque = req.query.title;
+  const ratingque = req.query.rating;
+//   const updateMovie = movies.find((movie) => movie[id]);
+  if (id <= movies.length && id > 0) {
+    // if (titleque) movies[req.params.id-1].title = req.query.title
+console.log(titleque);
+console.log(ratingque);
+    // if (ratingque) movies[req.params.id-1].rating == req.query.rating
+    // res.status(200).json({ status: 200, message: "update successfully" });
+    if (titleque) movies[id-1].title = titleque; 
+    if (ratingque) movies[id-1].rating = ratingque ; 
+  } else {
+    res.status(404).json({
+      status: 404,
+      error: true,
+      message: `the movie${id}does not exist`,
+    });
+  }
+  console.log(movies[id-1].title);
+console.log(movies[id-1].rating);
+});
 //Server Port
 app.listen(5000, () => {
   console.log("Server listening on port 3000");
