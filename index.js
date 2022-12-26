@@ -2,11 +2,11 @@ const express = require("express");
 const app = express();
 
 const movies = [
-    { title: 'Jaws', year: 1975, rating: 8 },
-    { title: 'Avatar', year: 2009, rating: 7.8 },
-    { title: 'Brazil', year: 1985, rating: 8 },
-    { title: 'الإرهاب والكباب‎', year: 1992, rating: 6.2 }
-]
+  { title: "Jaws", year: 1975, rating: 8 },
+  { title: "Avatar", year: 2009, rating: 7.8 },
+  { title: "Brazil", year: 1985, rating: 8 },
+  { title: "الإرهاب والكباب‎", year: 1992, rating: 6.2 },
+];
 
 //  Create Simple API
 app.get("/test", (req, res) => {
@@ -43,18 +43,18 @@ app.get("/search", (req, res) => {
 
 //create a new search Movies
 app.get("/movies/create", (req, res) => {
-    res.send("This is the create movies route");
-  });
+  res.send("This is the create movies route");
+});
 
 //read
-  app.get("/movies/read", (req, res) => {
-    res.send({
-      status: 200,
-      message: "this list of movies has been",
-      data: movies,
-    });
-// Update
-app.get("/movies/update", (req, res) => {
+app.get("/movies/read", (req, res) => {
+  res.send({
+    status: 200,
+    message: "this list of movies has been",
+    data: movies,
+  });
+  // Update
+  app.get("/movies/update", (req, res) => {
     res.send("This is the update movies route");
   });
 
@@ -63,7 +63,45 @@ app.get("/movies/update", (req, res) => {
     res.send("This is the delete movies route");
   });
 
+  //Sort By Date
+  app.get("/movies/read/by-date", (req, res) => {
+    const sortedMovies = movies.sort((a, b) => a.year - b.year);
+    res.send({
+      status: 200,
+      message: "this list of movies Sorted By Date",
+      data: sortedMovies,
+    });
   });
+
+  //Sort By Rating
+  app.get("/movies/read/by-rating", (req, res) => {
+    const sortedMoviesByRate = movies.sort((a, b) => a.rating - b.rating);
+    res.send({
+      status: 200,
+      message: "this list of movies Sorted By Rate",
+      data: sortedMoviesByRate,
+    });
+  });
+
+  //Sort By Title
+  app.get("/movies/read/by-title", (req, res) => {
+    const sortedMoviesByTitle = movies.sort((a, b) => {
+      if (a.title < b.title) {
+        return -1;
+      }
+      if (a.title > b.title) {
+        return 1;
+      }
+      return 0;
+    });
+    res.send({
+      status: 200,
+      message: "this list of movies Sorted By Rate",
+      data: sortedMoviesByTitle,
+    });
+  });
+});
+
 //Server Port
 app.listen(3000, () => {
   console.log("Server listening on port 3000");
