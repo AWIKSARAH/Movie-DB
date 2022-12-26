@@ -6,6 +6,14 @@ app.get("/test", (req, res) => {
     res.json({ status: 200, message: "OK" });
   });
 
+//Let's complicate : Time
+app.get("/time", (req, res) => {
+    const date = new Date();
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    res.json({ status: 200, message: `${hours}:${minutes}` });
+  });
+
   
 //Server Port
 app.listen(3000, () => {
