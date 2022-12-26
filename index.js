@@ -102,7 +102,28 @@ app.get("/movies/read", (req, res) => {
   });
 });
 
+//Read ONE
+app.get("/movies/read/id/:id", (req, res) => {
+    const idnum = parseInt(req.params.id);//undefined
+  // const  = req.query.search;
+//   const search = movies.find((movie) => movie[idnum-1] === id);
+//   console.log(typeof(idnum),idnum);
+//   console.log(movies[req.params.id-1]);
+  if (idnum <= movies.length)  {
+    res.status(200).json({ status: 200, message: "OK", data: movies[idnum] });
+  } else {
+    res
+      .status(404)
+      .json({
+        status: 404,
+        error: true,
+        message: `the movie ${idnum} does not exist`,
+      });
+  }
+}
+);
+
 //Server Port
-app.listen(3000, () => {
+app.listen(3001, () => {
   console.log("Server listening on port 3000");
 });
