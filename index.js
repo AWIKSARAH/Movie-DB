@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+app.use(express.json());
 
 const movies = [
   { title: "Jaws", year: 1975, rating: 8 },
@@ -41,10 +42,6 @@ app.get("/search", (req, res) => {
   }
 });
 
-//create a new search Movies
-app.get("/movies/create", (req, res) => {
-  res.send("This is the create movies route");
-});
 
 //read
 app.get("/movies/read", (req, res) => {
@@ -53,13 +50,9 @@ app.get("/movies/read", (req, res) => {
     message: "this list of movies has been",
     data: movies,
   });
-  // Update
-  app.get("/movies/update", (req, res) => {
-    res.send("This is the update movies route");
-  });
 
   //Delete
-  app.get("/movies/delete", (req, res) => {
+  app.delete("/movies/delete", (req, res) => {
     res.send("This is the delete movies route");
   });
 
@@ -106,8 +99,8 @@ app.get("/movies/read", (req, res) => {
 app.get("/movies/read/id/:id", (req, res) => {
   const idnum = parseInt(req.params.id); //undefined
 
-  if (idnum <= movies.length) {
-    res.status(200).json({ status: 200, message: "OK", data: movies[idnum] });
+  if (idnum-1 <= movies.length) {
+    res.status(200).json({ status: 200, message: "OK", data: movies[idnum-1] });
   } else {
     res.status(404).json({
       status: 404,
@@ -118,11 +111,11 @@ app.get("/movies/read/id/:id", (req, res) => {
 });
 
 // Create a new movie
-app.get("/movies/add", (req, res) => {
+app.post("/movies/add", (req, res) => {
   const newMovie = {
     title: req.query.title,
-    year: req.query.year,
-    rating: req.query.rating || 4,
+    year: parseInt(req.query.year),
+    rating: parseInt(req.query.rating) || 4,
   };
 
   if (
@@ -138,11 +131,12 @@ app.get("/movies/add", (req, res) => {
   } else {
     movies.push(newMovie);
     res.status(200).json({ status: 200, message: "add successfully" });
+    res.send(newMovie);
   }
 });
 
 //Delete a movie
-app.get("/movies/delete/:id", (req, res) => {
+app.delete("/movies/delete/:id", (req, res) => {
   const id = req.params.id; //undefined
   //   const deleteMovie = movies.find(movie[id])
   console.log(id);
@@ -159,19 +153,20 @@ app.get("/movies/delete/:id", (req, res) => {
 });
 
 //Update the movie
-app.get("/movies/update/:id", (req, res) => {
+app.put("/movies/update/:id", (req, res) => {
   const id = parseInt(req.params.id); //undefined
   const titleque = req.query.title;
   const ratingque = req.query.rating;
-//   const updateMovie = movies.find((movie) => movie[id]);
+  //   const updateMovie = movies.find((movie) => movie[id]);
   if (id <= movies.length && id > 0) {
     // if (titleque) movies[req.params.id-1].title = req.query.title
-console.log(titleque);
-console.log(ratingque);
+    console.log(titleque);
+    console.log(ratingque);
     // if (ratingque) movies[req.params.id-1].rating == req.query.rating
-    // res.status(200).json({ status: 200, message: "update successfully" });
-    if (titleque) movies[id-1].title = titleque; 
-    if (ratingque) movies[id-1].rating = ratingque ; 
+    // 
+    if (titleque == undefined){console.log("no title")}else{ movies[id - 1].title = titleque}
+    if (ratingque == undefined) {console.log("no rating");}else{movies[id - 1].rating = ratingque}
+    res.status(200).json({ status: 200, message: "update successfully" });
   } else {
     res.status(404).json({
       status: 404,
@@ -179,8 +174,6 @@ console.log(ratingque);
       message: `the movie${id}does not exist`,
     });
   }
-  console.log(movies[id-1].title);
-console.log(movies[id-1].rating);
 });
 //Server Port
 app.listen(5000, () => {
