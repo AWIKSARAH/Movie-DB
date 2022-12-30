@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-
+const autoIncrement = require("mongoose-auto-increment");
 mongoose.set("strictQuery", false);
 //connecct db
 mongoose.connect(
@@ -12,6 +12,7 @@ mongoose.connect(
 app.use(express.json());
 app.use(bodyParser.json());
 //Schema
+autoIncrement.initialize(mongoose.connection);
 
 const MovieSchema = mongoose.Schema({
   title: {
@@ -29,12 +30,19 @@ const MovieSchema = mongoose.Schema({
 });
 
 const movies = mongoose.model("movies", MovieSchema);
+MovieSchema.plugin(autoIncrement.plugin, { model: 'movies', field: '_id' });
+
+async function getModelLength() {
+  return await movies.countDocuments();
+}
 
 //read All movies routes
 app.get("/movies/read", async (req, res) => {
   try {
     const movie = await movies.find();
     res.json(movie);
+console.log( await getModelLength())
+
   } catch (err) {
     console.log(err);
   }
@@ -93,7 +101,11 @@ app.post("/movies/add", async (req, res) => {
   //     req.body.title = title
   //   req.body.rating = rating
 
+console.log( await getModelLength())
+  id= await getModelLength();
+  
   const movie = new movies({
+  _id: id,
     title: req.body.title,
     year: req.body.year,
     rating: req.body.rating,
@@ -134,10 +146,17 @@ app.delete("/movies/delete/:id", async (req, res) => {
 // update /movie
 
 app.put("/movies/update/:id", async (req, res) => {
+ const title = req.query.title;
+ const rating = req.query.rating;
+//  req.body.title=title;
+//  req.body.rating=rating;
+//   console.log(req.body.title);
+//   console.log(req.query.title);
+if(title && !rating) {
   try {
     const movie = await movies.updateOne(
       { _id: req.params.id },
-      { $set: { title: req.query.title } }
+      { $set: { title: title } }
     );
     // movie.title = req.body.title;
     // movie.year = req.body.year;
@@ -145,7 +164,36 @@ app.put("/movies/update/:id", async (req, res) => {
     res.json(movie);
   } catch (err) {
     res.status(500).json(err);
-  }
+  }}
+  if(!title && rating){
+    try {
+      const movie = await movies.updateOne(
+        { _id: req.params.id },
+        { $set: { rating: rating } }
+      );
+      // movie.title = req.body.title;
+      // movie.year = req.body.year;
+      // movie.rating = req.body.rating;
+      res.json(movie);
+    } catch (err) {
+      res.status(500).json(err);
+    }}
+    if(title && rating){
+      try {
+        const movie = await movies.updateMany(
+          { _id: req.params.id },
+          { $set: { rating: rating } },
+          { $set: { title: title } }
+        );
+        // movie.title = req.body.title;
+        // movie.year = req.body.year;
+        // movie.rating = req.body.rating;
+        res.json(movie);
+      } catch (err) {
+        res.status(500).json(err);
+      }}
+      
+
 });
 //server
 app.listen(5000, () => {
