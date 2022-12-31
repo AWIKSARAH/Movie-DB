@@ -1,8 +1,11 @@
 const express = require("express");
 const app = express();
+const port = process.env.PORT || 3001;
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const autoIncrement = require("mongoose-auto-increment");
+const joi = require("@hapi/joi");
+const Joi = require("@hapi/joi");
 mongoose.set("strictQuery", false);
 //connecct db
 mongoose.connect(
@@ -13,7 +16,10 @@ app.use(express.json());
 app.use(bodyParser.json());
 //Schema
 autoIncrement.initialize(mongoose.connection);
-
+const schemaJoi = joi.object({
+  name: Joi.string().min(2).required(),
+  password: Joi.string().min(8).max(1024).required()
+})
 const MovieSchema = mongoose.Schema({
   title: {
     type: String,
@@ -35,6 +41,115 @@ MovieSchema.plugin(autoIncrement.plugin, { model: 'movies', field: '_id' });
 async function getModelLength() {
   return await movies.countDocuments();
 }
+
+
+const userSchema = new mongoose.Schema({
+  name:{
+    type: String,
+    required: true,
+  },
+  password:{
+    type: String,
+    required: true,
+  }
+
+})
+
+const User = mongoose.model('User', userSchema);
+
+//register --> Create User
+
+app.post("/register", async (req, res) => {
+
+ const {username,password} = req.body;
+ const {error} = schemaJoi.validate(req.body);
+ 
+  if(error) {return res.send(error);}
+ 
+  const newUser = new User({
+    name: username,
+    password: password
+  });
+  await newUser.save();
+  res.status(201).json(newUser)
+})
+
+//read users
+app.get("/users", async (req, res) => {
+  const users = await User.find();
+  res.json(users);
+})
+
+//update users
+app.put("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, password } = req.query;
+  // const users = await User.find();
+// console.log(users[req.params.id].name);
+// if(users[req.params.id] && name){
+//   users[req.params.id].name = req.body.username;}
+//   if(password){
+//   users[req.params.id].password = req.body.password;}
+//   await users[req.params.id].save();
+//   { _id: req.params.id },
+//   { $set: { title: title } }
+if(name && !password){
+  try {
+    const users = await User.updateOne(
+      { _id: id },
+      { $set: { name: name } }
+    );
+    res.json(users);
+  } catch (err) {
+    res.status(500).json(err);
+  }} 
+    if(!name && password){
+      try {
+        const users = await User.updateOne(
+          { _id: id },
+          { $set: { password: password } }
+        );
+        res.json(users);
+        console.log(users);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+      }
+
+      if(name && password){
+        try {
+          const users = await User.updateMany(
+            { _id: req.params.id },
+            { $set: { name: name } },
+            { $set: { password: password } }
+          );
+    
+          // movie.rating = req.body.rating;
+          res.json(users);
+        } catch (err) {
+          res.status(500).json(err);
+        }}
+})
+
+// Delete User 
+
+app.delete("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const users = await User.deleteOne({ _id: id });
+    res.json(users);}
+  
+  catch (err) {
+    res.status(500).json(err);
+  
+  }
+})
+
+//login
+app.post("/login", async (req, res) => {
+  res.send("<h1>Register<h1>")
+  })
+  
 
 //read All movies routes
 app.get("/movies/read", async (req, res) => {
@@ -105,7 +220,7 @@ console.log( await getModelLength())
   id= await getModelLength();
   
   const movie = new movies({
-  _id: id,
+  _id: id+1,
     title: req.body.title,
     year: req.body.year,
     rating: req.body.rating,
@@ -196,6 +311,7 @@ if(title && !rating) {
 
 });
 //server
-app.listen(5000, () => {
-  console.log("listening on port 3000");
+app.listen(port, () => {
+  console.log(typeof(port));
+  console.log(`listening on port ${port}`);
 });
