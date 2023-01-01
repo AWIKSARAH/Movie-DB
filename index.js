@@ -1,11 +1,16 @@
 const express = require("express");
 const app = express();
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const autoIncrement = require("mongoose-auto-increment");
-const joi = require("@hapi/joi");
 const Joi = require("@hapi/joi");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const  auth = require("./token-auth")
+const dotenv = require('dotenv');
+require('dotenv').config();
+
 mongoose.set("strictQuery", false);
 //connecct db
 mongoose.connect(
@@ -16,7 +21,7 @@ app.use(express.json());
 app.use(bodyParser.json());
 //Schema
 autoIncrement.initialize(mongoose.connection);
-const schemaJoi = joi.object({
+const schemaJoi = Joi.object({
   name: Joi.string().min(2).required(),
   password: Joi.string().min(8).max(1024).required()
 })
@@ -61,21 +66,35 @@ const User = mongoose.model('User', userSchema);
 
 app.post("/register", async (req, res) => {
 
- const {username,password} = req.body;
- const {error} = schemaJoi.validate(req.body);
+ const username = req.query.name;
+ const password = req.query.password;
+ const {error} = schemaJoi.validate(req.query);
  
-  if(error) {return res.send(error);}
+  if(error) {return res.send(error.details[0].message);}
  
+  const nameExist= await User.findOne({name:req.query.name})
+  if(nameExist)return res.status(400).send("the name is already registered")
+
+
+const salt = await bcrypt.genSalt(10);
+const hash = await bcrypt.hash(password, salt);
+
   const newUser = new User({
     name: username,
-    password: password
+    password: hash
   });
-  await newUser.save();
-  res.status(201).json(newUser)
+  try{
+  const newuser = await newUser.save();
+  res.status(201).json(newuser)
+  console.log(newuser)
+  }
+  catch(err){
+    res.status(400).json(err)
+  }
 })
 
 //read users
-app.get("/users", async (req, res) => {
+app.get("/users",auth,async (req, res) => {
   const users = await User.find();
   res.json(users);
 })
@@ -84,15 +103,11 @@ app.get("/users", async (req, res) => {
 app.put("/users/:id", async (req, res) => {
   const { id } = req.params;
   const { name, password } = req.query;
-  // const users = await User.find();
-// console.log(users[req.params.id].name);
-// if(users[req.params.id] && name){
-//   users[req.params.id].name = req.body.username;}
-//   if(password){
-//   users[req.params.id].password = req.body.password;}
-//   await users[req.params.id].save();
-//   { _id: req.params.id },
-//   { $set: { title: title } }
+
+  const IDExist= await User.findOne({_:req.query.id})
+  if(IDExist)return res.status(400).send("the user NOT exist")
+
+
 if(name && !password){
   try {
     const users = await User.updateOne(
@@ -147,10 +162,21 @@ app.delete("/users/:id", async (req, res) => {
 
 //login
 app.post("/login", async (req, res) => {
-  res.send("<h1>Register<h1>")
+  const {error} = schemaJoi.validate(req.query);
+  if(error) {return res.send(error.details[0].message);}
+
+  const userNameExist= await User.findOne({name:req.query.name})
+  if(!userNameExist)return res.status(400).send("Invalid username")
+
+  const passwordExist= await bcrypt.compare(req.query.password, userNameExist.password)
+  if(!passwordExist)return res.status(400).send("Invalid password")
+// const JWT_SECRET =
+const token = jwt.sign({_id:userNameExist.id}, process.env.JWT_SECRET)
+res.header('auth-token', token).send(`Welcome ${req.query.name} this is ${token}`)
+console.log(res.get('connection'))
   })
   
-
+app.use('/login', auth)
 //read All movies routes
 app.get("/movies/read", async (req, res) => {
   try {
